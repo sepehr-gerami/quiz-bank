@@ -7,6 +7,8 @@ import { randomBytes } from "node:crypto";
 import { and, eq, gt } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
+import { promises } from "node:dns";
+import { date } from "zod";
 
 
 export const SESSION_COOKIE = "qb_session";
@@ -19,7 +21,8 @@ export type SessionUser = {
   role: "admin" | "user";
 };
 
-export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
+export const getCurrentUser = cache(async ():
+  Promise<SessionUser | null> => {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
