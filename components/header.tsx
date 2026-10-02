@@ -36,7 +36,7 @@ export default async function Header() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex items-center gap-6">
           <Link href={"/"} className="flex items-center gap-2.5">
-            <span className="grid size-10 place-items-center rounded-2xl bg-linear-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/25">
+            <span className="grid size-10 place-items-center rounded-2xl bg-linear-to-br from-indigo-600 to-sky-600 text-white shadow-lg shadow-indigo-600/25">
               <GraduationCap className="size-5" />
             </span>
             <span className="text-lg font-extrabold tracking-tight text-stone-900">
