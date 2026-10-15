@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { desc, eq, sql } from "drizzle-orm";
@@ -150,26 +151,23 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="stagger mx-auto mt-14 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
-      {statItems.map(s =>(
-        <Card key={s.label}
-        className="p-4 text-center"
-        >
-          <s.icon
-          className="mx-auto size-5 text-indigo-500"
-          />
-          <div className="mt-2 text-2xl
-          font-black tabular-nums
-          text-stone-900">{faDigits(s.value)}
-          </div>
-          <div className="text-xs font-medium
-          text-stone-500">
-            {s.label}
-          </div>
-            </Card>
-          ))}
-          </div>
+       
+        {/* Stats */}
+<div className="stagger mx-auto mt-14 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
+  {statItems.map((s) => (
+    <Card key={s.label} className="p-4 text-center">
+      <s.icon className="mx-auto size-5 text-indigo-500" />
+
+      <div className="mt-2 text-2xl font-black tabular-nums text-stone-900">
+        {faDigits(s.value)}
+      </div>
+
+      <div className="text-xs font-medium text-stone-500">
+        {s.label}
+      </div>
+    </Card>
+  ))}
+</div>
         </div>
       </section>
 
@@ -184,7 +182,7 @@ export default async function Home() {
               همین حالا شروع کنید — نتیجه بلافاصله پس از ثبت.
             </p>
           </div>
-          <Link href={"/quizzes"} className="btn-ghost text-indigo-600">
+          <Link href={"/quizzes"} className=" btn-secondary text-gray-600/90 ">
             همهٔ آزمون‌ها
             <ArrowLeft className="size-4" />
           </Link>
