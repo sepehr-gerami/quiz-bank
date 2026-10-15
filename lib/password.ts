@@ -1,5 +1,4 @@
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
-import { buffer } from "node:stream/consumers";
 import { promisify } from "node:util";
 
 
@@ -16,10 +15,23 @@ export async function verifyPassword(
     password: string,
     stored: string):Promise<boolean> {
  
-        const [solt, hash] = stored.split(":");
-        if(!hash || solt)  return false ;
-        const derived = (await scryptAsync(password, solt, 64)) as Buffer 
-        const expected =  Buffer.from(hash, "hex")
-        if(expected.length !== derived.length) return false
-        return timingSafeEqual(derived, expected);
+   const [salt, hash] = stored.split(":");
+
+if (!salt || !hash) {
+  return false;
+}
+
+const derived = (await scryptAsync(
+  password,
+  salt,
+  64,
+)) as Buffer;
+
+const expected = Buffer.from(hash, "hex");
+
+if (expected.length !== derived.length) {
+  return false;
+}
+
+return timingSafeEqual(derived, expected);
 }

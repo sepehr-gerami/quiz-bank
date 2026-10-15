@@ -1,8 +1,10 @@
+
 "use server";
 
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { hashPassword, verifyPassword } from "@/lib/password";
@@ -23,9 +25,17 @@ const passwordSchema = z
   .max(72, "گذرواژه حداکثر ۷۲ نویسه است.");
 
 const registerSchema = z.object({
-  fullName: z.string().trim().min(2, "نام و نام خانوادگی الزامی است.").max(120),
+  fullName: z
+    .string()
+    .trim()
+    .min(2, "نام و نام خانوادگی الزامی است.")
+    .max(120, "نام و نام خانوادگی حداکثر ۱۲۰ نویسه است."),
+
   username: usernameSchema,
   password: passwordSchema,
+
+  // ثبت‌نام عمومی فقط اجازه انتخاب دانش‌آموز یا معلم را می‌دهد.
+  role: z.enum(["user", "teacher"]).default("user"),
 });
 
 const loginSchema = z.object({
@@ -37,17 +47,33 @@ function backWithError(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
 }
 
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "23505"
+  );
+}
+
+function getRedirectPath(role: "admin" | "teacher" | "user"): string {
+  if (role === "admin") return "/admin";
+  if (role === "teacher") return "/teacher";
+  return "/quizzes";
+}
+
 export async function registerAction(formData: FormData): Promise<void> {
   const parsed = registerSchema.safeParse({
     fullName: formData.get("fullName"),
     username: formData.get("username"),
     password: formData.get("password"),
+    role: formData.get("role") ?? undefined,
   });
 
   if (!parsed.success) {
     backWithError(
       "/register",
-      parsed.error.issues[0]?.message ?? "ورودی نامعتبر است.",
+      parsed.error.issues[0]?.message ?? "اطلاعات واردشده معتبر نیست.",
     );
   }
 
@@ -61,18 +87,35 @@ export async function registerAction(formData: FormData): Promise<void> {
     backWithError("/register", "این نام کاربری قبلاً ثبت شده است.");
   }
 
-  const [created] = await db
-    .insert(users)
-    .values({
-      username: parsed.data.username,
-      fullName: parsed.data.fullName,
-      passwordHash: await hashPassword(parsed.data.password),
-      role: "user",
-    })
-    .returning({ id: users.id });
+  let createdUser: { id: string };
 
-  await createSession(created.id);
-  redirect("/");
+  try {
+    const [created] = await db
+      .insert(users)
+      .values({
+        username: parsed.data.username,
+        fullName: parsed.data.fullName,
+        passwordHash: await hashPassword(parsed.data.password),
+        role: parsed.data.role,
+      })
+      .returning({ id: users.id });
+
+    if (!created) {
+      throw new Error("ساخت حساب کاربری انجام نشد.");
+    }
+
+    createdUser = created;
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      backWithError("/register", "این نام کاربری قبلاً ثبت شده است.");
+    }
+
+    throw error;
+  }
+
+  await createSession(createdUser.id);
+
+  redirect(getRedirectPath(parsed.data.role));
 }
 
 export async function loginAction(formData: FormData): Promise<void> {
@@ -84,27 +127,38 @@ export async function loginAction(formData: FormData): Promise<void> {
   if (!parsed.success) {
     backWithError(
       "/login",
-      parsed.error.issues[0]?.message ?? "ورودی نامعتبر است.",
+      parsed.error.issues[0]?.message ?? "اطلاعات ورود معتبر نیست.",
     );
   }
 
   const rows = await db
-    .select({ id: users.id, passwordHash: users.passwordHash })
+    .select({
+      id: users.id,
+      passwordHash: users.passwordHash,
+      role: users.role,
+    })
     .from(users)
     .where(eq(users.username, parsed.data.username))
     .limit(1);
 
-  const row = rows[0];
-  const ok = row
-    ? await verifyPassword(parsed.data.password, row.passwordHash)
-    : false;
+  const user = rows[0];
 
-  if (!ok) {
+  if (!user) {
     backWithError("/login", "نام کاربری یا گذرواژه اشتباه است.");
   }
 
-  await createSession(row!.id);
-  redirect("/");
+  const passwordIsValid = await verifyPassword(
+    parsed.data.password,
+    user.passwordHash,
+  );
+
+  if (!passwordIsValid) {
+    backWithError("/login", "نام کاربری یا گذرواژه اشتباه است.");
+  }
+
+  await createSession(user.id);
+
+  redirect(getRedirectPath(user.role));
 }
 
 export async function logoutAction(): Promise<void> {

@@ -15,7 +15,11 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-export const userRoleEnum = pgEnum("user_role", ["admin", "user"]);
+export const userRoleEnum = pgEnum("user_role", [
+  "admin",
+  "teacher",
+  "user",
+]);
 
 export const questionTypeEnum = pgEnum("question_type", [
   "mcq",

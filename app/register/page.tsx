@@ -1,26 +1,26 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { UserRoundPlus } from "lucide-react";
+import { ChevronDown, UserRoundPlus } from "lucide-react";
 import { registerAction } from "@/actions/auth";
 import { getCurrentUser } from "@/lib/auth";
 import { Flash } from "@/components/ui";
 import { first, type SearchParams } from "@/lib/queries";
+import RoleSelect from "@/components/role-select";
 
-
-export const metadata =  {title: "ثبت نام"};
+export const metadata = { title: "ثبت نام" };
 
 const RegisterPage = async ({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) => {
-    const user = await getCurrentUser();
-    if(user) redirect("/");
+  const user = await getCurrentUser();
+  if (user) redirect("/");
 
-    const sp = await searchParams
-    const error =  first(sp.error)
+  const sp = await searchParams
+  const error = first(sp.error)
   return (
-      <main className=" w-full mx-auto flex min-h-[calc(100vh-4rem)] max-w-md items-center px-4 py-12">
+    <main className=" w-full mx-auto flex min-h-[calc(100vh-4rem)] max-w-md items-center px-4 py-12">
       <div className="card w-full p-8">
         <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-linear-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/25">
           <UserRoundPlus className="size-6" />
@@ -49,6 +49,22 @@ const RegisterPage = async ({
               placeholder="مثلاً سارا بهرامی"
             />
           </div>
+
+
+        <div>
+  <label className="label" htmlFor="role">
+    نوع حساب کاربری
+  </label>
+
+  <RoleSelect />
+
+  <p className="mt-2 text-xs leading-6 text-stone-500">
+    دانش‌آموز در آزمون‌ها شرکت می‌کند و معلم آزمون‌های
+    خودش را مدیریت می‌کند.
+  </p>
+</div>
+
+
 
           <div>
             <label className="label" htmlFor="username">
@@ -105,4 +121,4 @@ const RegisterPage = async ({
   )
 }
 
-export default RegisterPage ;
+export default RegisterPage;
